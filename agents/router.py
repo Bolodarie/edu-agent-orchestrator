@@ -1,12 +1,11 @@
 """Agente roteador: classifica a pergunta do aluno em uma ``Intent``."""
 
 import json
-import re
 
 from pydantic import ValidationError
 
 from exceptions import IntencaoDesconhecidaError
-from llm import PERGUNTA, LLMClient, build_blocks
+from llm import PERGUNTA, LLMClient, build_blocks, strip_code_fences
 from models import Intent, RouterResult
 
 _INTENTS = ", ".join(f'"{i.value}"' for i in Intent)
@@ -21,14 +20,6 @@ SYSTEM_PROMPT = (
     "sem texto adicional."
 )
 
-_FENCE_RE = re.compile(r"^```[a-zA-Z0-9_-]*[ \t]*\n?(.*?)\n?```$", re.DOTALL)
-
-
-def _strip_fences(texto: str) -> str:
-    texto = texto.strip()
-    achado = _FENCE_RE.match(texto)
-    return achado.group(1).strip() if achado else texto
-
 
 class RouterAgent:
     def __init__(self, llm: LLMClient) -> None:
@@ -37,7 +28,7 @@ class RouterAgent:
     def classify(self, pergunta: str) -> RouterResult:
         bruto = self._llm.complete(SYSTEM_PROMPT, build_blocks(**{PERGUNTA: pergunta}))
         try:
-            dados = json.loads(_strip_fences(bruto))
+            dados = json.loads(strip_code_fences(bruto))
             if not isinstance(dados, dict):
                 raise ValueError("a resposta do roteador não é um objeto JSON")
             return RouterResult.model_validate(dados)

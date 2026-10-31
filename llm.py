@@ -56,6 +56,17 @@ def parse_blocks(prompt: str) -> dict[str, str]:
     return {chave: "\n".join(linhas) for chave, linhas in blocos.items()}
 
 
+_FENCE_RE = re.compile(r"^```[a-zA-Z0-9_-]*[ \t]*\n?(.*?)\n?```$", re.DOTALL)
+
+
+def strip_code_fences(texto: str) -> str:
+    """Remove uma cerca de código que envolva a saída inteira (com ou sem tag de
+    linguagem); sem cerca, devolve o texto apenas sem espaços nas pontas."""
+    texto = texto.strip()
+    achado = _FENCE_RE.match(texto)
+    return achado.group(1).strip() if achado else texto
+
+
 class LLMClient(Protocol):
     def complete(self, system: str, user: str) -> str: ...
 

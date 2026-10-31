@@ -11,6 +11,7 @@ from llm import (
     SQL_ANTERIOR,
     LLMClient,
     build_blocks,
+    strip_code_fences,
 )
 from models import Intent
 
@@ -25,14 +26,7 @@ SYSTEM_PROMPT = (
     "Responda SOMENTE com o SQL, sem explicações e sem cercas de código."
 )
 
-_FENCE_RE = re.compile(r"^```[a-zA-Z0-9_-]*[ \t]*\n?(.*?)\n?```$", re.DOTALL)
 _SELECT_RE = re.compile(r"\bselect\b", re.IGNORECASE)
-
-
-def _strip_fences(texto: str) -> str:
-    texto = texto.strip()
-    achado = _FENCE_RE.match(texto)
-    return achado.group(1).strip() if achado else texto
 
 
 class QueryAgent:
@@ -53,7 +47,7 @@ class QueryAgent:
             blocos[ERRO_ANTERIOR] = erro_anterior
 
         bruto = self._llm.complete(SYSTEM_PROMPT, build_blocks(**blocos))
-        sql = _strip_fences(bruto)
+        sql = strip_code_fences(bruto)
         if not sql or not _SELECT_RE.search(sql):
             raise SaidaDoAgenteInvalidaError(
                 "O agente de consulta não devolveu uma consulta SQL válida."
