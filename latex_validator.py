@@ -98,7 +98,8 @@ def validate_latex(text: str) -> "tuple[str, list[str]]":
                     f"no parágrafo \"{excerpt}\"; exibido como código."
                 )
                 body = part.strip()
-                lead = part[: len(part) - len(part.lstrip())]
-                trail = part[len(part.rstrip()):]
+                # Mantém só as quebras de linha; indentação deslocaria a cerca.
+                lead = "\n" * part[: len(part) - len(part.lstrip())].count("\n")
+                trail = "\n" * part[len(part.rstrip()):].count("\n")
                 output.append(f"{lead}```\n{body}\n```{trail}")
     return "".join(output), warnings

@@ -76,3 +76,10 @@ def test_newline_final_preservado():
     saida, avisos = validate_latex("Texto $x+1\n")
     assert len(avisos) == 1
     assert saida == "```\nTexto $x+1\n```\n"
+
+
+def test_paragrafo_ruim_indentado_abre_cerca_na_coluna_zero():
+    saida, avisos = validate_latex("Texto\n\n    Valor $x+1\n\nFim")
+    assert len(avisos) == 1
+    assert saida == "Texto\n\n```\nValor $x+1\n```\n\nFim"
+    assert all(not l.startswith(" ") for l in saida.splitlines() if "```" in l)
