@@ -85,6 +85,8 @@ _TOPICOS: dict[str, tuple[str, ...]] = {
     "2º Grau": ("2o grau", "2 grau", "segundo grau", "bhaskara", "baskara"),
     "Sistemas": ("sistemas", "sistema", "sistemas lineares", "sistema linear"),
     "Fatoração": ("fatoracao", "fatorar", "fatoracao de polinomios"),
+    # Ausente do seed de propósito: exercita o caminho `sem_resultados` (spec 6.2).
+    "Logaritmo": ("logaritmo", "log"),
 }
 
 
@@ -111,7 +113,8 @@ def _find_topic(pergunta: str) -> str | None:
 
 
 # --- Roteador ------------------------------------------------------------------------
-_RE_RESOLUCAO = re.compile(r"\bresolu|\bresolver")
+# `resolv` cobre resolver/resolva/resolve (ampliação do `resolu`/`resolver` da spec).
+_RE_RESOLUCAO = re.compile(r"\bresolu|\bresolv")
 _RE_RESUMO = re.compile(r"\bresumo|\bteoria")
 _RE_EXERCICIOS = re.compile(r"\bexercicio|\bquest(?:ao|oes)\b|\blista")
 

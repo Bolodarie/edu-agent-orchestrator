@@ -45,20 +45,20 @@ def test_imports_of_detecta_violacao():
 
 
 def test_app_importa_so_orchestrator_e_models():
-    permitidos = {"streamlit", "orchestrator", "models"} | STDLIB
+    permitidos = {"streamlit", "orchestrator", "models"} | (STDLIB - {"importlib"})
     extras = _imports_do_arquivo(RAIZ / "app.py") - permitidos
     assert not extras, f"app.py importa módulos proibidos: {sorted(extras)}"
 
 
 def test_agents_nao_importam_database():
-    proibidos = {"database", "orchestrator", "app"}
+    proibidos = {"database", "orchestrator", "app", "importlib"}
     for arquivo in _arquivos_dos_agentes():
         violacoes = _imports_do_arquivo(arquivo) & proibidos
         assert not violacoes, f"{arquivo.name} importa {sorted(violacoes)}"
 
 
 def test_database_nao_importa_agentes_nem_llm():
-    proibidos = {"agents", "llm", "orchestrator", "app"}
+    proibidos = {"agents", "llm", "orchestrator", "app", "importlib"}
     violacoes = _imports_do_arquivo(RAIZ / "database.py") & proibidos
     assert not violacoes, f"database.py importa {sorted(violacoes)}"
 
@@ -69,3 +69,32 @@ def test_agents_so_dependem_do_permitido():
         internos = (_imports_do_arquivo(arquivo) & INTERNOS) - {"agents"}
         extras = internos - permitidos
         assert not extras, f"{arquivo.name} depende de {sorted(extras)}"
+
+
+def uses_dynamic_import(source: str) -> bool:
+    """Detecta ``__import__``, ``import importlib`` e ``importlib.import_module``,
+    que contornariam a checagem estática de imports."""
+    for no in ast.walk(ast.parse(source)):
+        if isinstance(no, ast.Name) and no.id == "__import__":
+            return True
+        if isinstance(no, ast.Attribute) and no.attr in {"import_module", "__import__"}:
+            return True
+        if isinstance(no, ast.Name) and no.id == "import_module":
+            return True
+    return "importlib" in imports_of(source)
+
+
+def test_uses_dynamic_import_detecta_violacao():
+    assert uses_dynamic_import("m = __import__('database')")
+    assert uses_dynamic_import("import importlib\nimportlib.import_module('database')")
+    assert uses_dynamic_import("from importlib import import_module\nimport_module('x')")
+    assert uses_dynamic_import("import importlib as il\nil.import_module('x')")
+    assert uses_dynamic_import("import importlib")
+    assert not uses_dynamic_import("import os\nx = os.path.join('a', 'b')")
+
+
+def test_sem_import_dinamico_nas_camadas_restritas():
+    arquivos = [RAIZ / "app.py", RAIZ / "database.py", *_arquivos_dos_agentes()]
+    for arquivo in arquivos:
+        fonte = arquivo.read_text(encoding="utf-8")
+        assert not uses_dynamic_import(fonte), f"{arquivo.name} usa import dinâmico"

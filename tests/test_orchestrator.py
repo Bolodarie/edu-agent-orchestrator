@@ -1,3 +1,6 @@
+import inspect
+from pathlib import Path
+
 import pytest
 
 from agents.formatter import FormatterAgent
@@ -6,6 +9,7 @@ from agents.router import RouterAgent
 from database import Database
 from llm import MockLLMClient
 from models import Intent
+import orchestrator
 from orchestrator import Orchestrator, build_orchestrator
 from tests.fakes import FakeLLMClient
 
@@ -193,3 +197,22 @@ def test_select_com_blob_nao_derruba_o_pipeline(db):
         "exercícios de fatoração"
     )
     assert r.status == "ok"
+
+
+def test_topico_fora_do_seed_vira_sem_resultados(db):
+    # Mock + banco reais: o SQL filtra por 'Logaritmo', ausente do seed.
+    formatter = FakeLLMClient(["não deveria ser chamado"])
+    r = make(db, formatter=formatter).handle("exercícios de logaritmo")
+    assert r.status == "sem_resultados"
+    assert formatter.calls == []
+    assert "LIKE '%Logaritmo%'" in r.trace.attempts[0].sql
+    assert r.trace.attempts[0].row_count == 0
+
+
+def test_caminho_padrao_do_banco_e_absoluto_e_dentro_do_projeto():
+    padrao = inspect.signature(build_orchestrator).parameters["db_path"].default
+    assert padrao == orchestrator.DEFAULT_DB_PATH
+    caminho = Path(padrao)
+    projeto = Path(orchestrator.__file__).resolve().parent
+    assert caminho.is_absolute()
+    assert caminho == projeto / "data" / "edu.db"

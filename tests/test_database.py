@@ -190,3 +190,26 @@ def test_execute_readonly_abre_conexao_somente_leitura(db, monkeypatch):
         )
     monkeypatch.undo()
     assert db.execute_readonly(consulta) == antes
+
+
+def test_ensure_ready_usa_transacao_imediata(tmp_path, monkeypatch):
+    # BEGIN IMMEDIATE faz uma 1ª execução concorrente esperar, em vez de falhar
+    # ao promover um BEGIN adiado a escrita.
+    executados: list[str] = []
+    conectar = sqlite3.connect
+
+    class _Espiao:
+        def __init__(self, conn):
+            self._conn = conn
+
+        def execute(self, sql, *args):
+            executados.append(sql)
+            return self._conn.execute(sql, *args)
+
+        def close(self):
+            self._conn.close()
+
+    monkeypatch.setattr(sqlite3, "connect", lambda *a, **k: _Espiao(conectar(*a, **k)))
+    Database(tmp_path / "edu.db").ensure_ready()
+    assert "BEGIN IMMEDIATE" in executados
+    assert "BEGIN" not in executados

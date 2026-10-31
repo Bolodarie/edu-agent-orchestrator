@@ -451,7 +451,7 @@ class Database:
         conn = sqlite3.connect(str(self.path), isolation_level=None)
         try:
             conn.execute("PRAGMA foreign_keys = ON")
-            conn.execute("BEGIN")
+            conn.execute("BEGIN IMMEDIATE")
             try:
                 for instrucao in _SCHEMA_SQL.split(";"):
                     if instrucao.strip():

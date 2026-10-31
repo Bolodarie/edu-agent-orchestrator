@@ -47,6 +47,8 @@ def test_llmclient_protocol_aceita_mock():
     [
         ("resolução do exercício de 2º grau", Intent.BUSCAR_RESOLUCAO),
         ("como resolver sistemas lineares", Intent.BUSCAR_RESOLUCAO),
+        ("resolva x² - 5x + 6 = 0", Intent.BUSCAR_RESOLUCAO),
+        ("resolve isso", Intent.BUSCAR_RESOLUCAO),
         ("resumo e exercícios", Intent.BUSCAR_RESUMO),
         ("quero a teoria de fatoração", Intent.BUSCAR_RESUMO),
         ("exercícios de fatoração", Intent.BUSCAR_EXERCICIOS),
@@ -79,6 +81,8 @@ def test_maiusculas_e_acentos():
         ("exercícios de segundo grau", "2º Grau"),
         ("exercícios de sistema linear", "Sistemas"),
         ("como fatorar", "Fatoração"),
+        ("exercícios de logaritmo", "Logaritmo"),
+        ("o que é log", "Logaritmo"),
     ],
 )
 def test_catalogo_de_topicos_e_apelidos(pergunta, fragmento):

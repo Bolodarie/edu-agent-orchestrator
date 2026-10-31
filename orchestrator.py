@@ -20,6 +20,9 @@ from latex_validator import validate_latex
 from llm import MockLLMClient
 from models import Intent, OrchestratorResponse, QueryAttempt, Status, Trace
 
+# Ancorado no módulo (não no cwd): o app roda de qualquer diretório.
+DEFAULT_DB_PATH = Path(__file__).resolve().parent / "data" / "edu.db"
+
 MSG_FORA_DO_ESCOPO = (
     "Só consigo ajudar com álgebra: exercícios, resumos teóricos e resoluções "
     "passo a passo. Tente, por exemplo, \"exercícios de equação do 2º grau\"."
@@ -118,7 +121,7 @@ class Orchestrator:
         return None
 
 
-def build_orchestrator(db_path: str | Path = "data/edu.db") -> Orchestrator:
+def build_orchestrator(db_path: str | Path = DEFAULT_DB_PATH) -> Orchestrator:
     llm = MockLLMClient()
     database = Database(db_path)
     database.ensure_ready()
