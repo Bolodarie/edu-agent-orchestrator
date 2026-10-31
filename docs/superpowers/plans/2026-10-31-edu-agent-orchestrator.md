@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-31-edu-agent-orchestrator-design.md` (leia junto; este plano referencia suas seções 4 e 6.x).
 
-**Nota:** a pasta não é repositório git; o plano não tem passos de commit.
+**Nota:** a pasta é um repositório git (remote `origin` = github `Bolodarie/edu-agent-orchestrator`); o plano em si não tem passos de commit.
 
 ## Global Constraints
 

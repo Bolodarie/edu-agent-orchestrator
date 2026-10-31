@@ -7,7 +7,7 @@ Design completo e aprovado: `docs/superpowers/specs/2026-10-31-edu-agent-orchest
 ## Comandos
 
 ```bash
-pip install -r requirements.txt     # streamlit, pydantic (+ pytest para dev)
+pip install -r requirements-dev.txt # runtime (streamlit, pydantic) + pytest; rodar só o app exige apenas requirements.txt
 streamlit run app.py                # demo
 pytest                              # suíte de testes
 ```
@@ -40,5 +40,5 @@ app.py  ──►  orchestrator.py  ──►  agents/*  ──►  llm.py
 - Python 3.10 (type hints modernos, mas sem recursos 3.11+). Contratos entre camadas em Pydantic (`models.py`), nunca dicts soltos.
 - Dependências de runtime apenas `streamlit` e `pydantic`; `sqlite3` da stdlib. Não adicionar bibliotecas sem necessidade clara (validadores de SQL e LaTeX são propositalmente implementados à mão).
 - LaTeX do seed precisa ser válido e renderizar no Streamlit (`$...$` / `$$...$$`).
-- Banco em `data/edu.db`, criado e populado automaticamente na primeira execução; não versionar o arquivo.
+- Banco em `data/edu.db` (ancorado na pasta do projeto via `DEFAULT_DB_PATH`, não no cwd), criado e populado automaticamente na primeira execução; não versionar o arquivo.
 - Testes enxutos e focados em arquitetura, com `FakeLLMClient` no lugar das camadas vizinhas. Antes de dizer que algo está pronto, rode `pytest` e a demo.

@@ -35,7 +35,7 @@ Prova de conceito (PoC) de uma **arquitetura multi-agente integrada a um banco d
 - Python 3.10 (versão da máquina), Streamlit 1.63, Pydantic 2.12. Dependências de runtime: `streamlit`, `pydantic`. Dev: `pytest`.
 - SQLite via biblioteca padrão `sqlite3`.
 - Idioma da interface, dos dados e das mensagens ao aluno: **português do Brasil**. Identificadores de domínio seguem os nomes pedidos (`Topicos_Algebra`, `Exercicios`, `Resolucoes`).
-- A pasta do projeto não é repositório git.
+- A pasta do projeto é um repositório git (remote `origin` = github `Bolodarie/edu-agent-orchestrator`).
 
 ## 4. Arquitetura
 
@@ -105,7 +105,7 @@ Cada agente recebe um `LLMClient` por injeção no construtor, monta um prompt r
 - `MockLLMClient` varia a resposta por regras simples de palavra-chave, escondidas dentro dele; os agentes não sabem que isso existe:
   - "exercício"/tópico mencionado → `BUSCAR_EXERCICIOS` e SQL filtrando o tópico;
   - "resumo"/"teoria" → `BUSCAR_RESUMO`;
-  - "resolução"/"resolver" → `BUSCAR_RESOLUCAO`;
+  - "resolução"/"resolver" (e variações como "resolva"/"resolve") → `BUSCAR_RESOLUCAO`;
   - qualquer outra coisa → `FORA_DO_ESCOPO`.
   - O mock do formatador monta o Markdown a partir dos dados reais presentes no prompt.
 - **Gancho de demo do retry (decisão do designer):** se o texto do aluno contiver "teste retry", o mock devolve SQL inválido na primeira tentativa e, ao ver o erro no prompt da segunda, devolve o SQL correto.
@@ -180,7 +180,7 @@ Os prompts de usuário são montados com blocos rotulados em linhas próprias. O
 
 - Normalização: minúsculas e sem acentos antes de comparar.
 - **Precedência** quando várias regras casam: `resolu`/`resolver` → `BUSCAR_RESOLUCAO`; senão `resumo`/`teoria` → `BUSCAR_RESUMO`; senão `exercicio`/`questao`/`lista` → `BUSCAR_EXERCICIOS`; senão, só um tópico conhecido citado → `BUSCAR_EXERCICIOS`; senão `FORA_DO_ESCOPO`.
-- **Tópico:** o mock tem um catálogo de nomes de tópico e apelidos (ex.: "2º grau", "segundo grau", "bhaskara") e filtra por nome via `LIKE` sobre `Topicos_Algebra.nome`. Ele **não** conhece ids do banco. Sem tópico citado, a consulta não filtra por tópico. Tópico citado que não existe no catálogo do mock resulta em filtro sem linhas → `sem_resultados`.
+- **Tópico:** o mock tem um catálogo de nomes de tópico e apelidos (ex.: "2º grau", "segundo grau", "bhaskara") e filtra por nome via `LIKE` sobre `Topicos_Algebra.nome`. Ele **não** conhece ids do banco. Sem tópico citado, a consulta não filtra por tópico. Tópico citado que não existe no catálogo do mock resulta em filtro sem linhas → `sem_resultados`. O catálogo inclui `Logaritmo`, ausente do seed, justamente para exercitar esse caminho.
 - **Gancho "teste retry":** só afeta o SQL. A classificação de intenção segue as regras acima normalmente. Na 1ª tentativa (sem `ERRO_ANTERIOR:`) o mock devolve `SELECT * FROM Exercicios` (sem `LIMIT`), que o validador rejeita com `SQLRejeitadoError`, exercitando o caminho de rejeição e retry. Na 2ª, devolve o SQL correto.
 
 ### 6.3 SQL por intenção

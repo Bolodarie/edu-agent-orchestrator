@@ -38,12 +38,12 @@ Camadas inferiores levantam exceções tipadas; só o orquestrador as captura e 
 ## Como rodar
 
 ```bash
-pip install -r requirements.txt     # streamlit e pydantic
+pip install -r requirements-dev.txt # runtime (streamlit, pydantic) + pytest; só rodar a demo exige apenas requirements.txt
 streamlit run app.py                # demo em http://localhost:8501
-pytest                              # suíte de testes (requirements-dev.txt traz o pytest)
+pytest                              # suíte de testes
 ```
 
-O banco `data/edu.db` é criado e populado automaticamente na primeira execução.
+O banco `data/edu.db` (dentro da pasta do projeto, qualquer que seja o diretório de onde o app é iniciado) é criado e populado automaticamente na primeira execução.
 
 ## Exemplos de perguntas
 
@@ -51,6 +51,7 @@ O banco `data/edu.db` é criado e populado automaticamente na primeira execuçã
 - `resumo de fatoração`
 - `resolução de sistema linear`
 - `teste retry exercícios de fatoração`: o mock devolve um SQL inválido na primeira tentativa e o correto na segunda, então o expander mostra **2 tentativas** (a primeira com o erro).
+- `exercícios de logaritmo`: tópico fora do seed, o SQL não encontra linhas e a resposta é `sem_resultados` (o formatador nem é chamado).
 - `capital da França`: fora do escopo, o assistente explica o que sabe responder.
 
 ## Como trocar o mock por um LLM real
