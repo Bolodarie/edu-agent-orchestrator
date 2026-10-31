@@ -2,6 +2,7 @@ import sqlite3
 
 import pytest
 
+import database
 from database import SCHEMA_DESCRIPTION, Database
 from exceptions import SQLExecucaoError, SQLRejeitadoError
 from latex_validator import validate_latex
@@ -159,3 +160,33 @@ def test_resolucoes_do_seed_quebram_linhas_com_barra_dupla(db):
 def test_execute_readonly_rejeita_caracteres_que_o_sqlite_interpreta_diferente(db, sql):
     with pytest.raises(SQLRejeitadoError):
         db.execute_readonly(sql)
+
+
+def test_sqlite_warning_vira_execucao(db, monkeypatch):
+    # No Python 3.10, sqlite3.Warning não herda de sqlite3.Error.
+    class _Conexao:
+        row_factory = None
+
+        def execute(self, sql):
+            raise sqlite3.Warning("You can only execute one statement at a time.")
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(sqlite3, "connect", lambda *a, **k: _Conexao())
+    with pytest.raises(SQLExecucaoError):
+        db.execute_readonly("SELECT * FROM Exercicios LIMIT 1")
+
+
+def test_execute_readonly_abre_conexao_somente_leitura(db, monkeypatch):
+    # Sem o validador no caminho, só a URI `mode=ro` de execute_readonly barra a escrita.
+    consulta = "SELECT COUNT(*) AS n FROM Topicos_Algebra LIMIT 1"
+    antes = db.execute_readonly(consulta)
+    monkeypatch.setattr(database, "validate_select", lambda sql, *a, **k: sql)
+    with pytest.raises(SQLExecucaoError):
+        db.execute_readonly(
+            "INSERT INTO Topicos_Algebra (nome, descricao, resumo_teorico) "
+            "VALUES ('x', 'y', 'z')"
+        )
+    monkeypatch.undo()
+    assert db.execute_readonly(consulta) == antes

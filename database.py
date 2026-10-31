@@ -468,8 +468,9 @@ class Database:
     def execute_readonly(self, sql: str) -> list:
         """Valida e executa um SELECT numa conexão somente leitura.
 
-        SQLRejeitadoError (do validador) propaga sem alteração; só erros do
-        SQLite viram SQLExecucaoError. Não chama `enable_load_extension`.
+        SQLRejeitadoError (do validador) propaga sem alteração; só erros e avisos
+        do SQLite viram SQLExecucaoError (no Python 3.10, `sqlite3.Warning` não
+        herda de `sqlite3.Error`). Não chama `enable_load_extension`.
         """
         sql_validado = validate_select(sql)
         uri = f"{self.path.resolve().as_uri()}?mode=ro"
@@ -480,5 +481,5 @@ class Database:
                 return conn.execute(sql_validado).fetchall()
             finally:
                 conn.close()
-        except sqlite3.Error as exc:
+        except (sqlite3.Error, sqlite3.Warning) as exc:
             raise SQLExecucaoError(f"Erro ao executar o SQL: {exc}") from exc

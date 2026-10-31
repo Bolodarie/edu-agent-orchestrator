@@ -35,3 +35,15 @@ def test_integracao_com_mock():
         [{"nome": "Fatoração", "resumo_teorico": "Texto $a^2$"}],
     )
     assert "Texto $a^2$" in saida
+
+
+def test_valores_nao_serializaveis_em_json_nao_levantam():
+    from decimal import Decimal
+
+    rows = [{"b": b"\x00\x01", "d": Decimal("1.5"), "n": None}]
+    llm = FakeLLMClient(["ok"])
+    FormatterAgent(llm).format(Intent.BUSCAR_EXERCICIOS, rows)
+    dados = json.loads(parse_blocks(llm.calls[0][1])["DADOS"])
+    assert dados[0]["d"] == "1.5"
+    assert isinstance(dados[0]["b"], str)
+    assert dados[0]["n"] is None

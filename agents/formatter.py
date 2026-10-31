@@ -23,7 +23,7 @@ class FormatterAgent:
         self._llm = llm
 
     def format(self, intent: Intent, rows: list[dict[str, Any]]) -> str:
-        user = build_blocks(
-            INTENCAO=intent.value, DADOS=json.dumps(rows, ensure_ascii=False)
-        )
+        # default=str: o SQLite pode devolver bytes (BLOB) ou outros tipos sem JSON.
+        dados = json.dumps(rows, ensure_ascii=False, default=str)
+        user = build_blocks(INTENCAO=intent.value, DADOS=dados)
         return self._llm.complete(SYSTEM_PROMPT, user)

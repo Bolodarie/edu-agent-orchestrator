@@ -171,3 +171,25 @@ def test_build_orchestrator(tmp_path):
     r = build_orchestrator(caminho).handle("exercícios de fatoração")
     assert caminho.exists()
     assert r.status == "ok"
+
+
+def test_excecao_inesperada_vira_erro_sem_vazar_detalhe(db):
+    segredo = "falha-de-transporte-xyz"
+
+    class _FormatadorQuebrado:
+        def complete(self, system, user):
+            raise RuntimeError(segredo)
+
+    r = make(db, formatter=_FormatadorQuebrado()).handle("exercícios de fatoração")
+    assert r.status == "erro"
+    assert segredo not in r.text
+    assert "RuntimeError" not in r.text
+    assert any("RuntimeError" in a and segredo in a for a in r.trace.avisos)
+
+
+def test_select_com_blob_nao_derruba_o_pipeline(db):
+    sql = "SELECT randomblob(4) AS b FROM Exercicios LIMIT 1"
+    r = make(db, query=FakeLLMClient([sql]), formatter=FakeLLMClient(["ok"])).handle(
+        "exercícios de fatoração"
+    )
+    assert r.status == "ok"

@@ -59,6 +59,10 @@ class Orchestrator:
         except AgentPipelineError as exc:
             trace.avisos.append(f"{type(exc).__name__}: {exc}")
             return _resposta(MSG_ERRO, "erro", trace)
+        except Exception as exc:  # último recurso: nada escapa de handle()
+            # Detalhe técnico só no trace; o aluno vê apenas MSG_ERRO.
+            trace.avisos.append(f"{type(exc).__name__}: {exc}")
+            return _resposta(MSG_ERRO, "erro", trace)
 
     def _run(self, pergunta: str, trace: Trace) -> OrchestratorResponse:
         with _medir(trace, "roteador"):
