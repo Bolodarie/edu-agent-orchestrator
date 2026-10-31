@@ -166,9 +166,10 @@ def _check_final_limit(tokens: list, max_limit: int) -> None:
     if len(tokens) < 3 or not _is_word(tokens[-2], "LIMIT") or tokens[-1][0] != "number":
         raise _reject("a consulta deve terminar com LIMIT <inteiro>")
     valor = tokens[-1][1]
-    if not valor.isdigit():
+    if not (valor.isascii() and valor.isdigit()):
         raise _reject("LIMIT deve ser um inteiro")
-    if int(valor) > max_limit:
+    # Limita o tamanho antes de int(): evita ValueError em literais gigantes.
+    if len(valor) > 18 or int(valor) > max_limit:
         raise _reject(f"LIMIT máximo é {max_limit}")
 
 

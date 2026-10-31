@@ -89,3 +89,16 @@ def test_sql_rejeitado(sql):
 def test_nao_string_e_rejeitado():
     with pytest.raises(SQLRejeitadoError):
         validate_select(None)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    "limite",
+    [
+        "5²",  # dígito Unicode (sobrescrito)
+        "1٣",  # dígito arábico-índico
+        "9" * 5000,  # estoura o limite de conversão int() do Python
+    ],
+)
+def test_limit_nao_ascii_ou_gigante_levanta_sql_rejeitado(limite):
+    with pytest.raises(SQLRejeitadoError):
+        validate_select(f"SELECT * FROM Exercicios LIMIT {limite}")
