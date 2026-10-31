@@ -150,3 +150,12 @@ def test_resolucoes_do_seed_quebram_linhas_com_barra_dupla(db):
         valor = linha["passo_a_passo_latex"]
         for trecho in valor.split("\n")[1:-2]:
             assert trecho.endswith("\\\\"), valor
+
+
+@pytest.mark.parametrize("sql", [
+    "SELECT * FROM Exercicios LIMIT\xa05",
+    "SELECT * FROM Exercicios\x00 LIMIT 5",
+])
+def test_execute_readonly_rejeita_caracteres_que_o_sqlite_interpreta_diferente(db, sql):
+    with pytest.raises(SQLRejeitadoError):
+        db.execute_readonly(sql)

@@ -102,3 +102,37 @@ def test_nao_string_e_rejeitado():
 def test_limit_nao_ascii_ou_gigante_levanta_sql_rejeitado(limite):
     with pytest.raises(SQLRejeitadoError):
         validate_select(f"SELECT * FROM Exercicios LIMIT {limite}")
+
+
+@pytest.mark.parametrize(
+    "caractere",
+    [
+        "\xa0",  # NBSP: isspace() em Python, mas identificador para o SQLite
+        " ",  # em space
+        " ",  # separador de linha Unicode
+        "\x85",  # NEL
+        "\x00",  # NUL: o sqlite3 levanta ValueError
+        "\x1f",  # outro caractere de controle
+        "\v",  # o SQLite não trata \v como espaço
+    ],
+)
+def test_caractere_nao_ascii_ou_de_controle_fora_de_literal_e_rejeitado(caractere):
+    with pytest.raises(SQLRejeitadoError, match="caractere não suportado"):
+        validate_select(f"SELECT * FROM Exercicios LIMIT{caractere}5")
+
+
+def test_nul_embutido_e_rejeitado():
+    with pytest.raises(SQLRejeitadoError, match="caractere não suportado"):
+        validate_select("SELECT * FROM Exercicios\x00 LIMIT 5")
+
+
+def test_espacos_ascii_continuam_aceitos():
+    sql = "SELECT\t*\nFROM\r\nExercicios\fLIMIT  5"
+    assert validate_select(sql) == sql
+
+
+def test_letras_nao_ascii_em_literal_continuam_funcionando():
+    sql = "SELECT * FROM Topicos_Algebra WHERE nome LIKE '%Fatoração%' LIMIT 5"
+    assert validate_select(sql) == sql
+    # NBSP e NUL dentro de literal são dados, não sintaxe.
+    assert validate_select("SELECT * FROM Exercicios WHERE x = 'a\xa0b' LIMIT 5")

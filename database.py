@@ -32,6 +32,11 @@ _END_OF_FROM = frozenset(
 )
 # Caracteres que abrem identificadores entre aspas; não são suportados.
 _QUOTED_IDENT_CHARS = frozenset('"`[]')
+# Único conjunto que o SQLite trata como espaço. `str.isspace()` é mais largo
+# (NBSP, \x85, U+2003...) e abriria um descompasso com o SQLite, onde esses
+# caracteres viram parte de identificadores (ex.: `LIMIT\xa05` seria um alias).
+# `\v` fica de fora de propósito: o SQLite não o aceita como espaço.
+_ASCII_WHITESPACE = frozenset(" \t\n\r\f")
 
 # Um token é (tipo, valor, posição inicial); tipo: word | number | string | punct.
 _Token = tuple
@@ -44,14 +49,14 @@ def _reject(motivo: str) -> SQLRejeitadoError:
 def _tokenize(sql: str) -> list:
     """Quebra o SQL em tokens, respeitando literais '...' (com '' escapado).
 
-    Rejeita comentários e identificadores entre aspas fora de literais, e
-    literais não terminados.
+    Rejeita comentários, identificadores entre aspas, espaços não ASCII e
+    caracteres de controle fora de literais, e literais não terminados.
     """
     tokens: list = []
     i, n = 0, len(sql)
     while i < n:
         ch = sql[i]
-        if ch.isspace():
+        if ch in _ASCII_WHITESPACE:
             i += 1
         elif ch == "'":
             start = i
@@ -71,6 +76,8 @@ def _tokenize(sql: str) -> list:
             raise _reject("comentários não são permitidos")
         elif ch in _QUOTED_IDENT_CHARS:
             raise _reject("identificadores entre aspas não são permitidos")
+        elif ch.isspace() or not ch.isprintable():
+            raise _reject(f"caractere não suportado fora de texto: {ch!r}")
         elif ch.isalpha() or ch == "_":
             start = i
             while i < n and (sql[i].isalnum() or sql[i] == "_"):
