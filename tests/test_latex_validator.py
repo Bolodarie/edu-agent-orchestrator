@@ -63,3 +63,16 @@ def test_so_o_paragrafo_ruim_e_embrulhado():
     assert primeira == bom
     assert "```" not in primeira
     assert resto == f"```\n{ruim}\n```"
+
+
+def test_paragrafo_ruim_colado_numa_cerca():
+    saida, avisos = validate_latex("Valor $x+1\n```\ncode\n```\n")
+    assert len(avisos) == 1
+    assert saida == "```\nValor $x+1\n```\n```\ncode\n```\n"
+    assert "``````" not in saida
+
+
+def test_newline_final_preservado():
+    saida, avisos = validate_latex("Texto $x+1\n")
+    assert len(avisos) == 1
+    assert saida == "```\nTexto $x+1\n```\n"

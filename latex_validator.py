@@ -97,5 +97,8 @@ def validate_latex(text: str) -> "tuple[str, list[str]]":
                     f"Fórmula LaTeX malformada (cifrão, chave ou ambiente sem par) "
                     f"no parágrafo \"{excerpt}\"; exibido como código."
                 )
-                output.append(f"```\n{part.strip()}\n```")
+                body = part.strip()
+                lead = part[: len(part) - len(part.lstrip())]
+                trail = part[len(part.rstrip()):]
+                output.append(f"{lead}```\n{body}\n```{trail}")
     return "".join(output), warnings
